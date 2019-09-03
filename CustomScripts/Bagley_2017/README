@@ -1,0 +1,2 @@
+This folder contacins all datasets, template files, parameter files, and custom scripts needed to perform demographic analyses in fastsimcoal2, including: model choice, parameter estimation, bootstrapping, 2-population parameter estimation, and sensitivity analyses. Additional information on the input files and command lines required for each type of demographic analysis, and additional information on running custom scripts, can be found in ReadMe files within each folder.
+Also deposited in Dryad: https://datadryad.org/resource/doi:10.5061/dryad.vh75r/2
