@@ -1,0 +1,30 @@
+// Priors and rules file
+// *********************
+
+[PARAMETERS]
+//#isInt? #name   #dist.#min  #max 
+//all Ns are in number of haploid individuals
+1  $N_ANCESTRAL$ unif     1e4   2e5 output bounded REFERENCE 
+
+1  $TDIV1$       unif     1e4   1e5 output 
+1  $TPlusDIV$    unif     1e4   1e5 output         
+
+1  $N_ON$        unif    1000  200000 output
+1  $N_SOUTH$     unif    1000  200000 output
+
+1  $N_ancSOUTH$  unif    1000  200000 output
+
+[RULES]
+
+[COMPLEX PARAMETERS]
+
+0  $ResDiv1$        = $N_ancSOUTH$/$N_SOUTH$       output
+0  $ResDiv2$        = $N_ANCESTRAL$/$N_ancSOUTH$   output
+
+1  $TDIV2$   = $TDIV1$+$TPlusDIV$ output
+
+
+
+
+
+
