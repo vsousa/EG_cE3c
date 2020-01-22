@@ -2,3 +2,9 @@ This folder contains custom scripts and input files (EST and TPL) files used for
 
 1. Malaspinas et al (2016) Nature https://doi.org/10.1038/nature18299
 2. Bagley et al (2017) Molecular Ecology https://doi.org/10.1111/mec.13972
+
+This folder also contains scripts to perform several analysis in fastsimcoal.
+1. Fastsimcoal_VCFtoSFS: bash and R scripts to build the SFS from VCF file
+2. Fastsimcoal_Runs: bash scripts to perform fastsimcoal2 runs
+3. Fastsimcoal_ProcessOutput: bash and R scripts to process the output of fastsimcoal2
+4. ToyExample_DeerMice: Example of application of the above scripts to a very reduced sub-set of data from Pfeifer et al. (2018) MBE https://doi.org/10.1093/molbev/msy004
