@@ -246,6 +246,12 @@ jointsfs <- getjointsfs(genopops=resampled_geno, nindpops=ind_threshold)
 if(!(sum(dim(jointsfs)==((ind_threshold*2)+1))==npop)) {
   stop("Incorrect dimensions of joint SFS after resampling.")
 }
+# get the entries with the monomorphic sites
+entries_mono <- matrix(c(rep(1,times=npop),(ind_threshold*2)+1), nrow=2, byrow=TRUE)
+# add the entry of the fixed ancestral and fixed derived
+jointsfs[entries_mono[1,,drop=FALSE]] <- sum(jointsfs[entries_mono])
+# set the fixed derived to zero
+jointsfs[entries_mono[1,,drop=FALSE]] <- 0
 
 # 2.2. Get the joint SFS sampling 1 SNP per block
 jointsfs_1snp <- getsfs_singlesnpblock(resampled_geno_block, ind_threshold)
@@ -256,7 +262,6 @@ if(!(sum(dim(jointsfs_1snp)==((ind_threshold*2)+1))==npop)) {
 
 # 3rd. Discard monomorphic sites
 jointsfs_nomon <- jointsfs
-entries_mono <- matrix(c(rep(1,times=npop),(ind_threshold*2)+1), nrow=2, byrow=TRUE)
 jointsfs_nomon[entries_mono] <- 0
 
 # 4th. Get the MAF (folded SFS)
