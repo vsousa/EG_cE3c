@@ -637,10 +637,10 @@ get_indpopinfo_indvcf <- function(indpopinfo, indidvcf) {
   count <- 0
   indexinpopinfo <- numeric() # index of the indid individuals in indpopinfo
   indexretainvcf <- numeric() # index of individuals to retain from indid 
-  for(i in 1:length(indidvcf)) {
-    if (sum(indpopinfo[,1]==indidvcf[i]) > 0) {
-      indexinpopinfo <- c(indexinpopinfo, which(indpopinfo[,1]==indidvcf[i]))
-      indexretainvcf <- c(indexretainvcf, i)
+  for(i in 1:length(indpopinfo[,1])) {
+    if (sum(indpopinfo[i,1]==indidvcf) > 0) {
+      indexinpopinfo <- c(indexinpopinfo, i)
+      indexretainvcf <- c(indexretainvcf, which(indpopinfo[i,1]==indidvcf))
       count <- count + 1 
     }
   }

@@ -83,21 +83,17 @@ nindvcf  <- length(indidvcf)
 # $indexretainvcf : index in indidvcf of the individuals found in both the VCF and indpopinfo matrix
 commonind <- get_indpopinfo_indvcf(indpopinfo, indidvcf)
 
-# vcf.indpopinfo keeps the information about the individuals in the vcf file
-# that are sorted in the same order as they are in the file indpopinfo
-vcf.indpopinfo <- indpopinfo[commonind$indexinpopinfo, ]
-
-# check that the individuals in vcf.indpopinfo have the same order as in indpopinfo
-if(sum(vcf.indpopinfo[,1]!=indidvcf[commonind$indexretainvcf])>0) {
+# check that the individuals in indpopinfo have the same order as in indpopinfo
+if(sum(indpopinfo[,1]!=indidvcf[commonind$indexretainvcf])>0) {
   stop("Error! The order of individuals is not the same in indpopinfo and indidvcf!")
 }
 
 # number of individuals
-nind <- length(vcf.indpopinfo[,1])
+nind <- length(indpopinfo[,1])
 
 # Get number of populations and pop names
-npop <- length(unique(vcf.indpopinfo[,2]))
-pop.names <- unique(vcf.indpopinfo[,2])
+npop <- length(unique(indpopinfo[,2]))
+pop.names <- unique(indpopinfo[,2])
 
 # Print info for user
 print(paste("Read ", indpopinfofilename, ", with ", nrow(indpopinfo), " individuals, and ", npop, " populations.",sep=""))
