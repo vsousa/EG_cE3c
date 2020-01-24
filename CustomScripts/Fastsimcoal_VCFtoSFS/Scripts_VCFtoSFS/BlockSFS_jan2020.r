@@ -109,10 +109,6 @@ print(paste("NOTE: individuals in VCF will be sorted according to order in ", in
 gt_file <-  paste(filename_vcf ,".GT", sep="");
 nind_tmp <- length(scan(gt_file, nlines=1));
 tgendata_original <- matrix(scan(gt_file, na.strings="-1"), ncol=nind_tmp, byrow=T);
-# check
-if(nind != ncol(tgendata_original)) {
-  stop("Error! Wrong number of individuals in GT file!")
-};
 nsites <- nrow(tgendata_original)
 print(paste("Read genotypes from ", gt_file, ", with ", nsites, " sites, and ", nind_tmp, " individuals.",sep=""))
 rm(nind_tmp)
@@ -141,6 +137,12 @@ rm(nind_tmp)
 tgendata <- tgendata_original[,commonind$indexretainvcf]
 rm(tgendata_original)
 #dp <- dp[,commonind$indexretainvcf]
+
+# check that we keep the correct number of individuals
+if(nind != ncol(tgendata)) {
+  stop("Error! Wrong number of individuals in GT file after filtering to keep only individuals in ind pop info file!")
+};
+
 
 # Check that we only have entries 0,1,2 and NA
 checkentries <- sum(tgendata==0,na.rm=T)+sum(tgendata==1,na.rm=T)+sum(tgendata==2,na.rm=T)+sum(is.na(tgendata))
