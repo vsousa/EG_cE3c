@@ -1,3 +1,10 @@
+list.of.packages <- c("RColorBrewer")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) {
+  stop(paste("Packages missing! Please install with:", paste("install.packages(",new.packages,")",sep=""),sep=" "))
+}
+
+
 #' lookForTheBestLhoodSim
 #' Function to plot the distribution among runs and produce the file
 #' with the BestLhood among the different runs
@@ -57,175 +64,20 @@ relLhood<-function(AICs) {
   ws
 }
 
-# COMPUTELHOOD
-# computes the loglikelihood given an obs.sfs and exp.sfs
-# INPUT
-#   obs.sfs : numeric vector with the observed SFS
-#   exp.sfs : numeric vector with the expected SFS
-# RETURN
-#   log likelihood computed as SUM m_i log10(p_i), 
-#   where m_i is the ith entry of obs.sfs and p_i is the ith entry of exp.sfs
-# NOTE: for entries where m_i > 0 and p_i=0, we replace p_i by a small value (penalty)
-computelhood <- function(obs.sfs, exp.sfs) {
-  
-  lhood <- 0
-  
-  # remove the first and last entries
-  obs.sfs <- obs.sfs[-c(1,length(obs.sfs))]
-  exp.sfs <- exp.sfs[-c(1,length(exp.sfs))]
-  
-  # Get the valid entries, i.e. entries where obs.SFS > 0
-  eval <- which(obs.sfs > 0)
-  
-  # Calculate expected SFS with the penaltie for entries where obs.SFS > 0 and exp.SFS == 0
-  if(sum(exp.sfs[eval]==0) > 0) {
-    # Settings (penalty for exo SFS entries with zero)
-    penalty <- 1e-10
-    minpenalty <- 1e-8
-    
-    penalty <- min(exp.sfs[exp.sfs>0])/100
-    if(penalty > minpenalty) {
-      penalty <- minpenalty
-    } 
-    
-    # Get the entries which are zero at the obs SFS to have the penalty
-    tmp.exp <- exp.sfs[eval]  # note that the length of tmp.exp is length(eval)
-    tmp.exp[tmp.exp==0] <- penalty 
-    exp.sfs[eval] <- tmp.exp
-  }
-  
-  # check that the sum of exp.sfs is 1
-  exp.sfs <- exp.sfs/sum(exp.sfs)
-  
-  # compute the likelihood
-  if(sum(exp.sfs[eval]==0) > 0) {
-    print("ERROR: still entries with exp.sfs==0!!!!")
-  } else {
-    lhood <- sum(obs.sfs[eval]*log10(exp.sfs[eval]))    
-  }
-  
-  lhood
-}
 
 
 
-# GET_SFSCOORDINATES
-# get the coordinates for the x axis of the plots, where 0 is coded as ancestral, 1 is het derived and 2 is homozygous derived
-# INPUT:
-#   popsinmodel : number of populations in the model
-#   pop.sizes   : sample sizes in number of gene copies for each population
-# OUTPUT:
-#   matrix.sfs : vector of strings with size prod(pop.sizes+1) with the coordinates for each entry of the multidimensional SFS
-get_sfscoordinates <- function(popsinmodel, pop.sizes) {
-  if (popsinmodel == 7) {
-    
-    matrix.sfs <-c(rep(0, prod(pop.sizes+1)))
-    k<-1
-    
-    for (i in 0:pop.sizes[1]) {
-      
-      for (j in 0:pop.sizes[2]) {
-        
-        for (r in 0:pop.sizes[3]) {
-          
-          for (x in 0:pop.sizes[4]) {
-            
-            for (y in 0:pop.sizes[5]) {
-              
-              for (z in 0:pop.sizes[6]) {
-                
-                for (v in 0:pop.sizes[7]) {
-                  matrix.sfs[k]<-c(paste(i,j,r,x,y,z,v, sep=","))
-                  k<-k+1
-                }
-              }
-            }
-          }  
-        }    
-      }
-    }
-    
-  } 
-  
-  
-  if (popsinmodel == 6) {
-    
-    matrix.sfs <-c(rep(0, prod(pop.sizes+1)))
-    k<-1
-    
-    for (i in 0:pop.sizes[1]) {
-      
-      for (j in 0:pop.sizes[2]) {
-        
-        for (r in 0:pop.sizes[3]) {
-          
-          for (x in 0:pop.sizes[4]) {
-            
-            for (y in 0:pop.sizes[5]) {
-              
-              for (z in 0:pop.sizes[6]) {
-                
-                matrix.sfs[k]<-c(paste(i,j,r,x,y,z, sep=","))
-                k<-k+1
-              }
-            }
-          }  
-        }    
-      }
-    }
-    
-  } 
-  if (popsinmodel == 5) {
-    
-    matrix.sfs <-c(rep(0, prod(pop.sizes+1)))
-    k<-1
-    
-    for (i in 0:pop.sizes[1]) {
-      
-      for (j in 0:pop.sizes[2]) {
-        
-        for (r in 0:pop.sizes[3]) {
-          
-          for (x in 0:pop.sizes[4]) {
-            
-            for (y in 0:pop.sizes[5]) {
-              
-              matrix.sfs[k]<-c(paste(i,j,r,x,y, sep=","))
-              k<-k+1              
-            }
-          }  
-        }    
-      }
-    }
-  } 
-  if(popsinmodel == 4) {
-    
-    matrix.sfs <-c(rep(0, prod(pop.sizes+1)))
-    k<-1
-    
-    for (i in 0:pop.sizes[1]) {
-      
-      for (j in 0:pop.sizes[2]) {
-        
-        for (r in 0:pop.sizes[3]) {
-          
-          for (x in 0:pop.sizes[4]) {
-            
-            
-            matrix.sfs[k]<-c(paste(i,j,r,x, sep=","))
-            k<-k+1
-          }
-        }
-      }  
-    }        
-  }
-  matrix.sfs
-}
 
-#This function creates a color scale for use with the image()
-#function. Input parameters should be consistent with those
-#used in the corresponding image plot. The "horiz" argument
-#defines whether the scale is horizonal(=TRUE) or vertical(=FALSE).
+#' image.scale
+#' This function creates a color scale for use with the image
+#'  function. Input parameters should be consistent with those
+#' used in the corresponding image plot. The "horiz" argument
+#' defines whether the scale is horizonal =TRUE or vertical =FALSE.
+#' @param z matrix or vector with values to plot 
+#' @param zlim vector of size two with min and max
+#' @param col vector with colours
+#' @param breaks vector with breaks
+#' @param horiz TRUE for horizontal or FALSE for vertical bar
 image.scale <- function(z, zlim, col = rainbow(12), breaks, horiz=TRUE, ...){
   if(!missing(breaks)){
     if(length(breaks) != (length(col)+1)){stop("must have one more break than colour")}
@@ -294,13 +146,12 @@ getindslabel <- function(poplabels, popindex, popindexperlin, indindex, selected
   indslabel
 }
 
-
-
-
-
-
-#--- Function to remove separators within a string
-removeTrailingSep=function(string, sep) {
+#' removeTrailingSep
+#' Function to remove separators within a string
+#' used in ParFileInterpreter_VS.r to process par files
+#' @param string string with line to process
+#' @param sep separator to remove
+removeTrailingSep <- function(string, sep) {
   temp=strsplit(string, split=sep)
   temp2=temp[[1]][nchar(temp[[1]])>0]
   cleanStr=temp2[1]
@@ -312,16 +163,24 @@ removeTrailingSep=function(string, sep) {
   cleanStr
 }
 
-#--- Replace Keep by -9999
-replaceKeep=function(string) {
+#' replaceKeep
+#' Replace Keep by -9999
+#' used in ParFileInterpreter_VS.r to process par files
+#' @param string with line to be changed. "keep" is replaced by -9999
+replaceKeep <- function(string) {
   if (grepl("keep", string)) {
     return(gsub("keep", "-9999", string))
   }
   return(string)
 }
 
-#--- Reading numbers on separate lines -----
-getNumbers=function(start, parFile, numSamples) {  
+#' getNumbers
+#' Reading numbers on separate lines 
+#' used in ParFileInterpreter_VS.r to process par files
+#' @param start index of line in parfile to start reading
+#' @param parFile vector of strings with the par file
+#' @param numSamples number of samples in par file
+getNumbers <- function(start, parFile, numSamples) {  
   for (i in 1:numSamples) {
     curnum=as.numeric(unlist(strsplit(parFile[start+i], split=separator))[1])
     if (i==1) {
@@ -333,7 +192,13 @@ getNumbers=function(start, parFile, numSamples) {
   num
 }
 
-readSampleSizesTimesAndInbreedingLevel=function(start, parFile, numSamples) {
+#' readSampleSizesTimesAndInbreedingLevel
+#' Read sample sizes and inbreeding levels
+#' used in ParFileInterpreter_VS.r to process par files
+#' @param start index of line in parfile to start reading
+#' @param parFile vector of strings with the par file
+#' @param numSamples number of samples in par file
+readSampleSizesTimesAndInbreedingLevel <- function(start, parFile, numSamples) {
   for (i in 1:numSamples) {
     curLine=unlist(strsplit(parFile[start+i], split=separator))
     curSampSize=as.numeric(curLine[1])
@@ -354,7 +219,12 @@ readSampleSizesTimesAndInbreedingLevel=function(start, parFile, numSamples) {
   list(ss=sampSize, st=sampTime, inb=inbreeding)
 }
 
-#--- Read migration matrix
+#' readMigMat
+#' Read migration matrix
+#' used in ParFileInterpreter_VS.r to process par files
+#' @param start index of line in parfile to start reading
+#' @param parFile vector of strings with the par file
+#' @param numSamples number of samples in par file
 readMigMat=function(start, parFile, numSamples) {
   for (i in 1:numSamples) {
     tmpseparator=separator
@@ -462,8 +332,8 @@ getRUNFilesServer <- function(settings_input, results_input) {
   }
   
   # Check that best run folder was copied
-  if(!file.exists( paste( pop, "-", model, "./run",run2, sep="")) ) {
-    stop(paste("File with best run: ", pop, "-", model, "./run",run2, " not found!"))  
+  if(!dir.exists(paste("./",pop, "-", model, "/run",run2, sep="")) ) {
+    stop(paste("File with best run: ", pop, "-", model, "./run",run2, " not found!", sep=""))  
   }
   
   # # Create folder with maxPar files
@@ -570,13 +440,12 @@ getBarplotWorstFitSFS <- function(obs.SFS, rel.exp.sfs, model, nworst=30) {
 }
 
 
-# TABLEPARAMS
-# returns a table with the parameters and point estimates
-# INPUT
-#   results_input : list with header_rescaled, etc.
-#   paramstring  : string matching the suffix of a given type of parameters, e.g. "N_" for Ne parameters
-# RETURNS
-#   table with parameters
+#' TABLEPARAMS
+#' returns a table with the parameters and point estimates
+#' INPUT
+#' @param results_input list with header_rescaled, etc.
+#' @param paramstring   string matching the suffix of a given type of parameters, e.g. "N_" for Ne parameters
+#' @return  table with parameters
 tableparams <- function(results_input,paramstring, ndigits, mult) {
   
   header_rescaled <- results_input$header_rescaled 
@@ -608,8 +477,8 @@ computelhoodAIC <- function(settings_input, results_input) {
   obssfs <- aperm(obssfs, c(npop:1))
   
   # read expected SFS and convert to vector
-  expsfsfile <- list.files(path=paste("./", popmodel, "./run", results_input$run2, "/", popmodel,sep=""), pattern="*.txt")
-  expsfsfile <- paste("./", popmodel, "./run", results_input$run2, "/", popmodel,"/",expsfsfile,sep="")
+  expsfsfile <- list.files(path=paste("./", popmodel, "/run", results_input$run2, "/", popmodel,sep=""), pattern="*.txt")
+  expsfsfile <- paste("./", popmodel, "/run", results_input$run2, "/", popmodel,"/",expsfsfile,sep="")
   if(file.exists(expsfsfile)) {
     expsfs <- scan(expsfsfile, skip=2)
     dim(expsfs) <- ss[c(npop:1)]
@@ -654,8 +523,8 @@ getfitobsexp <- function(settings_input, results_input) {
     obssfs <- aperm(obssfs, c(npop:1))
     
     # read expected SFS
-    expsfsfile <- list.files(path=paste("./", popmodel, "./run", results_input$run2, "/", popmodel,sep=""), pattern="*.txt")
-    expsfsfile <- paste("./", popmodel, "./run", results_input$run2, "/", popmodel,"/",expsfsfile,sep="")
+    expsfsfile <- list.files(path=paste("./", popmodel, "/run", results_input$run2, "/", popmodel,sep=""), pattern="*.txt")
+    expsfsfile <- paste("./", popmodel, "/run", results_input$run2, "/", popmodel,"/",expsfsfile,sep="")
     if(file.exists(expsfsfile)) {
       expsfs <- scan(expsfsfile, skip=2)
       dim(expsfs) <- ss[c(npop:1)]
@@ -711,14 +580,14 @@ getfitobsexp <- function(settings_input, results_input) {
   }
 }
 
-# PLOT_FITSFS_1D
-# plot the 1d sfs fit to the data
-# INPUT
-#   obs.sfs : observed SFS
-#   exp.sfs : expected SFS
-#   ylims   : limits for the y axis
-#   pop.name : pop.name
-#   log10scale : boolean, if TRUE plot is given in log10 scale
+#' PLOT_FITSFS_1D
+#' plot the 1d sfs fit to the data
+#' INPUT
+#' @param obs.sfs observed SFS as a 1D vector
+#' @param exp.sfs expected SFS as a 1D vector
+#' @param ylims   vector with 2 entries with limits for the y axis
+#' @param pop.name string with pop.name
+#' @param log10scale boolean, if TRUE plot is given in log10 scale
 plot_fitSFS_1d <- function(obs.sfs, exp.sfs, ylims, pop.name, log10scale) {
   mymat <- matrix(c(as.numeric(obs.sfs), as.numeric(exp.sfs)*sum(obs.sfs)), ncol=2)
   if(log10scale){
@@ -734,16 +603,16 @@ plot_fitSFS_1d <- function(obs.sfs, exp.sfs, ylims, pop.name, log10scale) {
   }
 }
 
-# PLOT 2D SFS
-# Plot 2D SFS for observed and expected SFS
-# INPUT
-#    obsSFS : matrix with observed SFS (counts)
-#    expSFS : matrix with expected SFS (probabilities)
-#    xtag : string with the label of x-axis
-#    ytag : string with the label of y-axis
-#    minentry : number with the minimum entry in the SFS (all entries with less than this are pooled together)
-# OUTPUT
-#    plot with the observed and expected SFS
+#' PLOT 2D SFS
+#' Plot 2D SFS for observed and expected SFS
+#' INPUT
+#' @param   obsSFS  matrix with observed SFS with counts
+#' @param   expSFS  matrix with expected SFS with probabilities
+#' @param   xtag  string with the label of x-axis
+#' @param   ytag  string with the label of y-axis
+#' @param   minentry  number with the minimum entry in the SFS. All entries with less than this are pooled together
+#' OUTPUT
+#' @return   plot with the observed and expected SFS
 plot2dSFS <- function(obsSFS,expSFS,xtag,ytag, minentry) {
   layout(matrix(1:3, nrow = 1), widths = c(0.4,0.4,0.2))
   
@@ -765,22 +634,25 @@ plot2dSFS <- function(obsSFS,expSFS,xtag,ytag, minentry) {
   image.scale(log10(obsSFS), zlim=range(breaksplot), col = nclasses, breaks=breaksplot, horiz=FALSE, ylab="log10(SFS counts)", cex.lab=1.5, cex.axis=1.5, cex.main=1.5)
 }
 
-# PLOT_RELDIFF2DSFS
-# Plot the fit of the 2D SFS in terms of difference between the observed and expected SFS
-# INPUT
-#    obsSFS : matrix with observed SFS (counts)
-#    expSFS : matrix with expected SFS (probabilities)
-#    xtag : string with the label of x-axis
-#    ytag : string with the label of y-axis
-#    minentry : number with the minimum entry in the SFS (all entries with less than this are pooled together)
-# OUTPUT
-#    plot with the relative observed/expected SFS
-plot_relDiff2dSFS <- function(obsSFS,expSFS,xtag,ytag, minentry) {
+#' PLOT_RELDIFF2DSFS
+#' Plot the fit of the 2D SFS in terms of difference between the observed and expected SFS
+#' INPUT
+#' @param obsSFS  matrix with observed SFS with counts
+#' @param expSFS  matrix with expected SFS with probabilities
+#' @param xtag  string with the label of x-axis
+#' @param ytag  string with the label of y-axis
+#' @param minentry  number with the minimum entry in the SFS, All entries with less than this are pooled together.
+#' @param marginal  boolean. If TRUE then the entries for monomorphic sites are not set to zero.
+#' OUTPUT
+#' @return  plot with the relative observed/expected SFS
+plot_relDiff2dSFS <- function(obsSFS,expSFS,xtag,ytag, minentry, marginal=TRUE) {
   layout(matrix(1:2, nrow = 1), widths = c(0.7,0.3))
   
   library(RColorBrewer)
   
-  obsSFS[1,1] <- 0
+  if(!marginal) {
+    obsSFS[1,1] <- 0
+  }
   expSFS <- expSFS*sum(obsSFS)
   
   eval <- obsSFS > minentry
@@ -798,27 +670,15 @@ plot_relDiff2dSFS <- function(obsSFS,expSFS,xtag,ytag, minentry) {
   
 }
 
-
-
-# COMPUTELHOOD
-# computes the loglikelihood given an obs.sfs and exp.sfs
-# INPUT
-#   obs.sfs : numeric vector with the observed SFS
-#   exp.sfs : numeric vector with the expected SFS
-# RETURN
-#   log likelihood computed as SUM m_i log10(p_i), 
-#   where m_i is the ith entry of obs.sfs and p_i is the ith entry of exp.sfs
-# NOTE: for entries where m_i > 0 and p_i=0, we replace p_i by a small value (penalty)
-# COMPUTELHOOD
-# computes the loglikelihood given an obs.sfs and exp.sfs
-# INPUT
-#   obs.sfs : numeric vector with the observed SFS
-#   exp.sfs : numeric vector with the expected SFS
-#   min.entry : numeric value with the minimum entry for the obs SFS. All entries i where obs.sfs[i]<=min.entry are pooled together.
-# RETURN
-#   log likelihood computed as SUM m_i log10(p_i), 
-#   where m_i is the ith entry of obs.sfs and p_i is the ith entry of exp.sfs
-# NOTE: for entries where m_i > 0 and p_i=0, we replace p_i by a small value (penalty)
+#' COMPUTELHOOD
+#' computes the loglikelihood given an obs.sfs and exp.sfs
+#' INPUT
+#' @param   obs.sfs numeric vector with the observed SFS with counts
+#' @param   exp.sfs numeric vector with the expected SFS with probabilities
+#' @param   min.entry numeric value with the minimum entry for the obs SFS. All entries i where obs.sfs<=min.entry are pooled together.
+#' @return   log likelihood computed as SUM m_i log10(p_i), 
+#'           where m_i is the ith entry of obs.sfs and p_i is the ith entry of exp.sfs
+#' NOTE: for entries where m_i > 0 and p_i=0, we replace p_i by a small value, called penalty.
 computelhood <- function(obs.sfs, exp.sfs, min.entry) {
   
   lhood <- 0

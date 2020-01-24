@@ -66,7 +66,11 @@
 # 
 #...........................................................................................
 
-
+list.of.packages <- c("plotrix", "diagram")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) {
+  stop(paste("Packages missing! Please install with:", paste("install.packages(",new.packages,")",sep=""),sep=" "))
+}
 
 # INPUT
 #   args : string with the name of the generic name of the par file
