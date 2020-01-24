@@ -52,7 +52,7 @@ seed=6126151;
 ############################################################################
 
 # Check that your vcf is indexed with tabix and compressed with bgzip
-bgzip -c ${vcffile}.vcf > ${vcffile}.vcf.gz;
+# bgzip -c ${vcffile}.vcf > ${vcffile}.vcf.gz;
 tabix -p vcf ${vcffile}.vcf.gz;
 
 # 2.1. Get the genotypes for each individual at each site (GT field)
