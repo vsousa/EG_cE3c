@@ -251,7 +251,7 @@ entries_mono <- matrix(c(rep(1,times=npop),(ind_threshold*2)+1), nrow=2, byrow=T
 # add the entry of the fixed ancestral and fixed derived
 jointsfs[entries_mono[1,,drop=FALSE]] <- sum(jointsfs[entries_mono])
 # set the fixed derived to zero
-jointsfs[entries_mono[1,,drop=FALSE]] <- 0
+jointsfs[entries_mono[2,,drop=FALSE]] <- 0
 
 # 2.2. Get the joint SFS sampling 1 SNP per block
 jointsfs_1snp <- getsfs_singlesnpblock(resampled_geno_block, ind_threshold)
