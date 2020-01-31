@@ -39,13 +39,13 @@ options(warn=-1)
 
 # DEBUG
 # tag of vcf file name
-# filename_vcf <- "final_filtered_3scaf" # tag for the file with genotypes (filename_vcf.GT), chromosome position info (filename_vcf.CHRMPOS), etc.
-# indpopinfofilename <- "IndPopInfo_OffOnSH.txt" # filename of the file with IndPopInfo (1st column indID, 2nd column popID)
+# filename_vcf <- "final_longest_scaffold_indDP_HETfiltered" # tag for the file with genotypes (filename_vcf.GT), chromosome position info (filename_vcf.CHRMPOS), etc.
+# indpopinfofilename <- "Scotland_aq_wSwitzerland_pol_ind_pop.txt" # filename of the file with IndPopInfo (1st column indID, 2nd column popID)
 # foldertag <- "block_SFS" # tag for the folder with the resulting resampled block SFS
 # block_length <- 1000 # define the length (distance among positions for defining a block)
-# ind_threshold_s <- "1,2,3" # number of diploid individuals per pop (P1, P2, P3)
+# ind_threshold_s <- "2,2" # number of diploid individuals per pop (P1, P2, P3)
 # dist_threshold <- 2 # minimum mean distance between consecutive SNPs in a good block
-# randomS <- TRUE # TRUE for randomly sampling individuals. FALSE for sampling at each block always the individuals with less missing data.
+# randomS <- FALSE # TRUE for randomly sampling individuals. FALSE for sampling at each block always the individuals with less missing data.
 # seed <- 236235  # seed for random number generator
 
 # Print setting
@@ -177,20 +177,20 @@ filename <- paste(block_length, "bp_dist", dist_threshold,"_ind",paste(ind_thres
 
 # create folder to save the results
 folderblock_name <- paste(foldertag,"_",filename,sep="")
-dir.create(folderblock_name)
+dir.create(folderblock_name, showWarnings = FALSE)
 setwd(folderblock_name)
 
 # Assuming that all blocks have the same order of individuals, which must be the case
 npop <- length(pop.names)
 # Get a list of index of individuals from each pop
-pop_ind_i <- sapply(1:npop, function(i) {which(indpopinfo[,2]==pop.names[i])})
+pop_ind_i <- lapply(1:npop, function(i) {which(indpopinfo[,2]==pop.names[i])})
 # Get a vector with the pop of each individual
 ind_inpop_i <- rep(1:npop, times=unlist(lapply(pop_ind_i, length)))
 print(paste("Resampling without missing data: blocks_length=", block_length, ", distance_threshold=", dist_threshold, ", individuals per pop (", paste(ind_threshold, collapse = ","), ")",sep=""))
 
 # Go through each scaffold to define blocks and select SNP with individuals without missing data at those blocks
 # NOTE: Assuming that blocks are independent, different individuals are sampled in different blocks.
-res_scaf <- sapply(1:length(scaffolds), function(i) {
+res_scaf <- lapply(1:length(scaffolds), function(i) {
   # define number of blocks
   select_sc <- chrmpos[,1]==scaffolds[i]
   # partition the scaffold into contiguous blocks with block_length based on polymorphic sites
@@ -232,13 +232,13 @@ print(paste("Number of BAD blocks removed:", sum(bad_blocks)))
 
 # Get the multidimenstional SFS across all blocks
 # 1st. Merge the geno list from each block
-resampled_geno_block <- sapply(res_scaf, function(x) {x$geno}, simplify=FALSE)
+resampled_geno_block <- lapply(res_scaf, function(x) {x$geno})
 # check if there is missing data
 if(sum(is.na(resampled_geno_block))>0) {
   stop("Missing data found in genotypes after resampling!")
 }
 # for each list, get the genotypes for pop i and add rbind then into single matrix
-resampled_geno <- sapply(c(1:npop), function(i) {do.call(rbind,lapply(resampled_geno_block, function(x) x[[i]]))})
+resampled_geno <- lapply(c(1:npop), function(i) {do.call(rbind,lapply(resampled_geno_block, function(x) x[[i]]))})
 print(paste("After resampling: Number of blocks is ", length(resampled_geno_block), ", Number of sites (can still include monomorphic sites) is ", nrow(resampled_geno[[1]]), sep=""))
 # (TO CHECK: this could include monomorphic sites!! Discard monomorphic sites here!)
 

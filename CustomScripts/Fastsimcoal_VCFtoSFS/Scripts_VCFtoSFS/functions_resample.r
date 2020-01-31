@@ -55,7 +55,7 @@ resample_block_deterministic <- function(geno_block, ind_threshold, ind_inpop_i,
   # get the missing data per individual at these sites
   missingdata_ind <- colSums(is.na(geno_block))/nrow(geno_block)
   # for each pop, get the index of ind_threshold individuals sorted according to missing data
-  sortedinds <-sapply(1:npop, function(i) {
+  sortedinds <-lapply(1:npop, function(i) {
       getsortedinds_deterministic(pop_ind_i[[i]], missingdata_ind, ind_threshold[i])})
   # check that there is no missing data in the index of sorted individuals
   if(sum(is.na(unlist(sortedinds)))>0) {
@@ -104,7 +104,7 @@ resample_block_random <- function(geno_block, ind_threshold, ind_inpop_i, pop_in
   # get the missing data per individual at these sites
   missingdata_ind <- colSums(is.na(geno_block))/nrow(geno_block)
   # for each pop, get the index of ind_threshold individuals sorted according to missing data
-  sortedinds <- sapply(1:npop, function(i) {
+  sortedinds <- lapply(1:npop, function(i) {
     getsortedinds_random(eval_inds=pop_ind_i[[i]], missingdata_ind, ind_threshold[i])})
   # check that there is no missing data in the index of sorted individuals
   if(sum(is.na(unlist(sortedinds)))>0) {
@@ -178,7 +178,7 @@ resample_scaffold <- function(geno_sc, snp_position, randomInd, block_length, di
   snps_block <- table(block_bins_snps)
   id_blocks_snps <- as.numeric(names(snps_block))
   # Get a list of index of sites from each block
-  selected_pos_sc <- sapply(1:length(id_blocks_snps), function(i) {which(block_bins_snps==id_blocks_snps[i])})
+  selected_pos_sc <- lapply(1:length(id_blocks_snps), function(i) {which(block_bins_snps==id_blocks_snps[i])})
   # Get the number of snps in each block
   num_snps_block_sc <- unlist(lapply(selected_pos_sc, length))
   
@@ -188,14 +188,14 @@ resample_scaffold <- function(geno_sc, snp_position, randomInd, block_length, di
   # - list with resampled genotypes res$geno
   # - list with number of snps
   # - list with dist_consecutiveSNPs
-  resampled <- sapply(1:length(snps_block), function(i) {
+  resampled <- lapply(1:length(snps_block), function(i) {
                       getdist_resample_block(geno_block=geno_sc[selected_pos_sc[[i]],,drop=F], 
                                              snp_position_block=snp_position[selected_pos_sc[[i]]], 
                                              num_snps_block=num_snps_block_sc[i], 
                                              randomInd=randomInd,
                                              dist_threshold, ind_threshold, ind_inpop_i, pop_ind_i, npop)
                       
-  }, simplify = FALSE)
+  })
   
   resampled
 }
@@ -275,7 +275,7 @@ getsfs_singlesnpblock <- function(resampled_geno_block, nindpops) {
   allfreq_single <- sapply(resampled_geno_block, function(block) {
     
       # get the allfreq across pops
-      allfreq <- sapply(block, function(x) rowSums(x[,,drop=FALSE]))
+      allfreq <- sapply(block, function(x) rowSums(x[,,drop=FALSE]), simplify=TRUE)
       # check that allfreq is a matrix and not a vector
       if(is.null(dim(allfreq))) {
         allfreq <- matrix(allfreq, ncol=npop)
@@ -302,7 +302,7 @@ getsfs_singlesnpblock <- function(resampled_geno_block, nindpops) {
       } else {
         return(allfreq[snp_i,,drop=FALSE])   
       }
-    })
+    }, simplify=TRUE)
     
     # check that the number of columns is the same as number of blocks
     if(!(ncol(allfreq_single)==nblock)) {
@@ -329,7 +329,7 @@ getsfs_singlesnpblock <- function(resampled_geno_block, nindpops) {
     # get the index as strings
     index_s <- names(freq_spectrum) 
     # transform strings into matrix of indices
-    index_i <- t(sapply(strsplit(index_s,split=","), as.numeric))
+    index_i <- t(sapply(strsplit(index_s,split=","), as.numeric, simplify=TRUE))
     
     # allfreq contains the index of the entries in the jointsfs array we need to update
     # NOTE: multidimensional arrays can be access with matrices with coordinates
@@ -366,7 +366,7 @@ getjointsfs <- function(genopops, nindpops) {
     stop("There is missing data in the genotype matrix used to compute SFS!")
   } else {
     # get the allele frequency as the sum across individuals at each site per pop
-    allfreq <- sapply(genopops, function(x) rowSums(x[,,drop=FALSE]))  
+    allfreq <- sapply(genopops, function(x) rowSums(x[,,drop=FALSE]), simplify=TRUE)  
     # add 1 to allfreq, since allfreq=0 corresponds to the entry 1 of a muldimentsional array
     allfreq <- allfreq+1
     
@@ -378,7 +378,7 @@ getjointsfs <- function(genopops, nindpops) {
     # get the index as strings
     index_s <- names(freq_spectrum) 
     # transform strings into matrix of indices
-    index_i <- t(sapply(strsplit(index_s,split=","), as.numeric))
+    index_i <- t(sapply(strsplit(index_s,split=","), as.numeric, simplify=TRUE))
     
     # allfreq contains the index of the entries in the jointsfs array we need to update
     # NOTE: multidimensional arrays can be access with matrices with coordinates
@@ -403,14 +403,19 @@ getmarginal_pairwise_2dsfs <- function(jointsfs) {
   samplesize <- dim(jointsfs)
   # number of pops
   npops <- length(samplesize)
-  
   # get index of pairwsise combinations
   pairwise_i <- combn(npops,2)
-  # get the 2D sfs for each pairwise_i combination
-  # using apply to a multidimensional array, summing the marginal of 2 dimensions (given by each column in pairwise_i)
-  # where the rows refer to pop1 and cols to pop2
-  # hence need to transpose the resulting matrix
-  marg2dsfs <- apply(pairwise_i, 2, function(col) {t(apply(jointsfs,col,sum))})
+  
+  if(npops>2) {
+    # get the 2D sfs for each pairwise_i combination
+    # using apply to a multidimensional array, summing the marginal of 2 dimensions (given by each column in pairwise_i)
+    # where the rows refer to pop1 and cols to pop2
+    # hence need to transpose the resulting matrix
+    marg2dsfs <- apply(pairwise_i, 2, function(col) {t(apply(jointsfs,col,sum))})
+  } else {
+    marg2dsfs <- list()
+    marg2dsfs[[1]] <- jointsfs
+  }
   # output a list with the 2D-SFS and corresponding pairwise comparisons
   list(sfs2d=marg2dsfs, pairwise=pairwise_i)
 }
@@ -424,7 +429,7 @@ getmarginal_1dsfs <- function(jointsfs) {
   # number of pops
   npops <- length(samplesize)
   # get the 1D sfs for each population
-  marg1dsfs <- sapply(1:npops, function(i) {apply(jointsfs,i,sum)})
+  marg1dsfs <- sapply(1:npops, function(i) {apply(jointsfs,i,sum)}, simplify=TRUE)
   # output a list with the 2D-SFS and corresponding pairwise comparisons
   marg1dsfs
 }
@@ -543,7 +548,7 @@ derivedtomaf <- function(jointsfs) {
   # get all possible number of combinations of frequencies across pops
   # this is done by geting a sequence from 1,...,n[1]; 1,...,n[2], etc.
   # then we apply expand.grid to that list
-  comb <- as.matrix(expand.grid(sapply(n, function(x) 1:x)))
+  comb <- as.matrix(expand.grid(sapply(n, function(x) 1:x, simplify=FALSE)))
   # check
   if(!(length(jointsfs)==nrow(comb))) {
     stop("jointsfs has a different size from possible combinations")

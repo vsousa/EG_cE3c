@@ -1,6 +1,8 @@
 #!/bin/bash
 # Vitor Sousa, last updated 24/01/2020 
 
+echo "IMPORTANT: Run line by line! Do not run as ./testToyExample.sh";
+
 ##############################################################
 ##############################################################
 # 1. Go from VCF to SFS
@@ -14,6 +16,10 @@ cp -r ../Fastsimcoal_VCFtoSFS/* .
 # 1.1 Modify the ProcessVCF.sh file with the following settings
 ##############################################################
 
+# ***************************************************************** 
+# EDIT MANUALLY ProcessVCF.sh 
+# Copy the following
+# ***************************************************************** 
 # tag for VCF file (vcf file with format "vcffile".vcf)
 vcffile="filtered_3scaf";
 # tag for the resulting files
@@ -37,6 +43,7 @@ scriptsRfolder="./Scripts_VCFtoSFS";
 randomInd=F;
 # seed for random sampling
 seed=6126151;
+# *****************************************************************
 
 # Make the bash script executable
 chmod +x ProcessVCF.sh
@@ -46,8 +53,11 @@ chmod +x ProcessVCF.sh
 ##################################################
 ./ProcessVCF.sh
 
+# tag for files and folders
+tagfilefolder=${block_length}bp_dist${dist_threshold}_ind${ind_threshold//\,/\_};
+
 # This will create the folder with the observed SFS
-ls block_SFS_1000bp_dist2_ind1_2_3
+ls block_SFS_${tagfilefolder}
 
 ##############################################################
 ##############################################################
@@ -57,10 +67,11 @@ ls block_SFS_1000bp_dist2_ind1_2_3
 
 # Copy folder to run fastsimcoal2
 cp -r ../Fastsimcoal_Runs/runFsc.sh .
+chmod +x *.sh
 
 # Copy the observed SFS with all linked sites 
 # This is used to estimate parameters and find the expected SFS for each model
-cp ./block_SFS_1000bp_dist2_ind1_2_3/SFS_1000bp_dist2_ind1_2_3/1000bp_dist2_ind1_2_3_MAF_nomon_DSFS.obs .
+cp ./block_SFS_${tagfilefolder}/SFS_${tagfilefolder}/${tagfilefolder}_MAF_nomon_DSFS.obs .
 
 # Make fastsimcoal2 and scripts (ending in *.sh) executable
 chmod +x fsc26
@@ -69,6 +80,10 @@ chmod +x fsc26
 # 2.1. Modify the file runFsc.sh to have the general settings defined for any model.
 #################################################################################
 
+# ***************************************************************** 
+# EDIT MANUALLY runFsc.sh 
+# Copy the following
+# ***************************************************************** 
 # ##--- Name of the fastsimcoal2 executable
 fsc=fsc26 
 echo "Fastsimcoal version ${fsc}"
@@ -108,6 +123,9 @@ quiet="-q" #-q option
 #--multiSFS?
 #multiSFS="" # Uncomment this line and comment next if you do not use the --multiSFS option
 multiSFS="--multiSFS" #--multiSFS
+# ***************************************************************** 
+
+
 
 ##############################################################
 # 2.2. runFsc.sh
@@ -126,7 +144,7 @@ multiSFS="--multiSFS" #--multiSFS
 #                  "jointMAFpop1_0.obs" for 2D MAF
 #                  "DAFpop0.obs" for 1D derived allele
 #                  "MAFpop0.obs" for 1D MAF
-./runFsc.sh NCS nomig_S2B 1000bp_dist2_ind1_2_3_MAF_nomon_DSFS.obs MSFS.obs
+./runFsc.sh NCS nomig_S2B ${tagfilefolder}_MAF_nomon_DSFS.obs MSFS.obs
 
 # This will create the following folders
 ls NCS-nomig_S2B
@@ -151,6 +169,10 @@ cd Scripts_AnalyseFsc
 # 3.1 Modify settings of file: AnalyseFscResults.r
 ####################################################
 
+# ***************************************************************** 
+# EDIT MANUALLY AnalyseFscResults.r
+# Copy the following
+# ***************************************************************** 
 settings <- list()
 # population tag 
 settings$poptag <- "NCS"
@@ -171,6 +193,7 @@ settings$obsfilename_unlinkedSNPs <- paste("../block_SFS_1000bp_dist2_ind1_2_3/S
 settings$multiSFS <- TRUE
 # -C option with minimum SFS counts. All entries with less than -C are pooled together
 settings$minentry <- 1
+# ***************************************************************** 
 
 # 3.2. Run the script AnalyseFscResults.r or run the Script line by line in RStudio
 Rscript AnalyseFscResults.r
