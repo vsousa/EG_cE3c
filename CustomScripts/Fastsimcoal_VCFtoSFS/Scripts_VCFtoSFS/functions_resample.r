@@ -161,7 +161,7 @@ resample_scaffold <- function(geno_sc, snp_position, randomInd, block_length, di
   # it is possible that users give an unsorted matrix
   sorted_i <- order(snp_position)
   snp_position <- snp_position[sorted_i]
-  geno_sc <- geno_sc[sorted_i,]
+  geno_sc <- geno_sc[sorted_i,,drop=FALSE]
   
   # Divide the positions into blocks of block_length
   # aux contains the sequence of the initial position of each block
@@ -404,14 +404,15 @@ getmarginal_pairwise_2dsfs <- function(jointsfs) {
   # number of pops
   npops <- length(samplesize)
   # get index of pairwsise combinations
-  pairwise_i <- combn(npops,2)
+  pairwise_i <- combn(npops,2, simplify = FALSE)
   
   if(npops>2) {
     # get the 2D sfs for each pairwise_i combination
     # using apply to a multidimensional array, summing the marginal of 2 dimensions (given by each column in pairwise_i)
     # where the rows refer to pop1 and cols to pop2
     # hence need to transpose the resulting matrix
-    marg2dsfs <- apply(pairwise_i, 2, function(col) {t(apply(jointsfs,col,sum))})
+    # BUG corrected 07/05/2020 - changed apply to lapply to enforce that the output is a list
+    marg2dsfs <- lapply(pairwise_i, function(x) {t(apply(jointsfs,x,sum))})
   } else {
     marg2dsfs <- list()
     marg2dsfs[[1]] <- jointsfs
@@ -429,7 +430,7 @@ getmarginal_1dsfs <- function(jointsfs) {
   # number of pops
   npops <- length(samplesize)
   # get the 1D sfs for each population
-  marg1dsfs <- sapply(1:npops, function(i) {apply(jointsfs,i,sum)}, simplify=TRUE)
+  marg1dsfs <- lapply(1:npops, function(i) {apply(jointsfs,i,sum)})
   # output a list with the 2D-SFS and corresponding pairwise comparisons
   marg1dsfs
 }
@@ -515,7 +516,7 @@ write.sfs <- function(jointsfs, outfiletag_sfs) {
   # get marginal 2D SFS
   marg_2dsfs <- getmarginal_pairwise_2dsfs(jointsfs)
   for(i in 1:length(marg_2dsfs$sfs2d)) {
-    outfilename <- paste(outfiletag_sfs, "_jointDAFpop", marg_2dsfs$pairwise[2,i]-1,"_", marg_2dsfs$pairwise[1,i]-1,".obs",sep="")
+    outfilename <- paste(outfiletag_sfs, "_jointDAFpop", marg_2dsfs$pairwise[[i]][2]-1,"_", marg_2dsfs$pairwise[[i]][1]-1,".obs",sep="")
     write_2dsfs(marg_2dsfs$sfs2d[[i]], outfilename)
   }
   marg_1dsfs <- getmarginal_1dsfs(jointsfs)
