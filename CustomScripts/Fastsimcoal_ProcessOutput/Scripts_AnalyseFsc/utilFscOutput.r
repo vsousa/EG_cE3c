@@ -410,7 +410,7 @@ getBarplotWorstFitSFS <- function(obs.SFS, rel.exp.sfs, model, nworst=30) {
   outlierentries <- which(eval)[outl]
   
   # get a matrix with the codes of the SFS entries
-  matrix.sfs <- as.matrix(expand.grid(sapply(ss[npop:1], function(x) {1:x}))[,npop:1])
+  matrix.sfs <- as.matrix(expand.grid(lapply(ss[npop:1], function(x) {1:x}))[,npop:1])
   
   # Read the files with entries with bias
   par(mfrow=c(1,1), mar=c(10,5,2,1), las=2)  
@@ -519,8 +519,12 @@ getfitobsexp <- function(settings_input, results_input) {
     npop <- tmp[1]  # number of pops
     ss <- tmp[2:(npop+1)]+1 # sample size
     obssfs <- scan(obsfile, skip=2) # read multisfs
+    # set the entry 1 to zero (as when comparing with expected SFS we only focus on polymorphic sites)
+    obssfs[1] <- 0
     dim(obssfs) <- ss[c(npop:1)]
     obssfs <- aperm(obssfs, c(npop:1))
+    
+    
     
     # read expected SFS
     expsfsfile <- list.files(path=paste("./", popmodel, "/run", results_input$run2, "/", popmodel,sep=""), pattern="*.txt")
@@ -539,25 +543,45 @@ getfitobsexp <- function(settings_input, results_input) {
     }
     
     # plot the entries of the SFS with worst fit
-    entries.sfs <- getBarplotWorstFitSFS(obssfs, expsfs, popmodel, nworst=30)
+    # note: nworst is by default 30, but when obssfs has less entries than 30
+    # we need to use the length-2 (two are the entries with monomorphic sites)
+    entries.sfs <- getBarplotWorstFitSFS(obssfs, expsfs, popmodel, nworst=min(30,length(obssfs)-2))
+    # if there are more than 2 pops, look at marginal pairwise SFS
+    if(length(dim(obssfs))>2) {
+    	# plot the fit to the marginal 2D SFS
+        pairobs <- getmarginal_pairwise_2dsfs(obssfs)
+        pairexp <- getmarginal_pairwise_2dsfs(expsfs)
+        
+        # go through all possible pairwise combinations
+        tmp <- sapply(c(1:ncol(pairobs$pairwise)), function(i){
+          # plot the 2D marginal SFS fit
+          plot2dSFS(pairobs$sfs2d[[i]], pairexp$sfs2d[[i]], 
+                    xtag=pop.names[pairobs$pairwise[2,i]], 
+                    ytag=pop.names[pairobs$pairwise[1,i]],
+                    minentry=minentry);
+          # Plot the relative 2D-SFS fit
+          plot_relDiff2dSFS(pairobs$sfs2d[[i]], pairexp$sfs2d[[i]], 
+                            xtag=pop.names[pairobs$pairwise[2,i]], 
+                            ytag=pop.names[pairobs$pairwise[1,i]], 
+                            minentry=minentry)
+        })
     
-    # plot the fit to the marginal 2D SFS
-    pairobs <- getmarginal_pairwise_2dsfs(obssfs)
-    pairexp <- getmarginal_pairwise_2dsfs(expsfs)
     
-    # go through all possible pairwise combinations
-    tmp <- sapply(c(1:ncol(pairobs$pairwise)), function(i){
-      # plot the 2D marginal SFS fit
-      plot2dSFS(pairobs$sfs2d[[i]], pairexp$sfs2d[[i]], 
-                xtag=pop.names[pairobs$pairwise[2,i]], 
-                ytag=pop.names[pairobs$pairwise[1,i]],
-                minentry=minentry);
+    } else if(length(dim(obssfs))==2) { # if there are two pops 
+    	# plot the 2D marginal SFS fit
+      plot2dSFS(obssfs, expsfs, 
+                  xtag=pop.names[2], 
+                  ytag=pop.names[1],
+                  minentry=minentry);
       # Plot the relative 2D-SFS fit
-      plot_relDiff2dSFS(pairobs$sfs2d[[i]], pairexp$sfs2d[[i]], 
-                        xtag=pop.names[pairobs$pairwise[2,i]], 
-                        ytag=pop.names[pairobs$pairwise[1,i]], 
-                        minentry=minentry)
-    })
+      plot_relDiff2dSFS(obssfs, expsfs, 
+                  xtag=pop.names[2], 
+                  ytag=pop.names[1], 
+                  minentry=minentry)
+    
+    } else if(length(dim(obssfs))==1) {
+      stop("This function does not work for 1D SFS!")
+    }
     
     # plot the fit to the marginal 1D SFS
     obs1d <- getmarginal_1dsfs(obssfs)
@@ -761,7 +785,7 @@ getmarginal_1dsfs <- function(jointsfs) {
   # number of pops
   npops <- length(samplesize)
   # get the 1D sfs for each population
-  marg1dsfs <- sapply(1:npops, function(i) {apply(jointsfs,i,sum)})
+  marg1dsfs <- lapply(1:npops, function(i) {apply(jointsfs,i,sum)})
   # output a list with the 2D-SFS and corresponding pairwise comparisons
   marg1dsfs
 }
