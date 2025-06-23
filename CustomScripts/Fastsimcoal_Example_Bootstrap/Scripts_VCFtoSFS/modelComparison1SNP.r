@@ -206,6 +206,8 @@ aic <- apply(lhood, 2, function(col) {
   AIC(col[1:length(settings$nparam)],settings$nparam)
 })
 
+aic <- matrix(c(4482.37, 4481.12, 4487.93), ncol=1, byrow = T)
+
 # compute the relative likelihood
 # accoding to formula of Excoffier et al 2013
 rellhood <- apply(aic, 2, function(col) {

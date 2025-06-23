@@ -23,7 +23,7 @@
 # NOTE: Do not use a VCF with a MAF filter applied, 
 #       as the SFS is affected by the MAF filters!
 
-# tag for VCF file (vcf file with format "vcffile".vcf)
+# tag for VCF file (vcf file with format "vcffile".vcf.gz)
 vcffile="filtered_3scaf";
 # tag for the resulting files
 vcftag=final_${vcffile};
