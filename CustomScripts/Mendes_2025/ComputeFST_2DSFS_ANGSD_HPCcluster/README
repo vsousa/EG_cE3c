@@ -1,0 +1,7 @@
+# STEP 1 - get saf file for each pop
+sbatch saf_test_slurm.sh
+
+# STEP 2 - get the 2D-SFS for each pair of populations
+sbatch sfs2d_test_slurm.sh
+
+
